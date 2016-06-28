@@ -4,7 +4,7 @@ Leveraging jQuery to perform webpage scraping in Javascript.
  - jQuery
 
 #### Currently supported functionality
-- ##### HTML to JSON
+##### HTML to JSON
 example-
 ````
 var file=new beautifulSoup(path);
@@ -13,7 +13,7 @@ file.onReady('html2json',var);
 **src** path to the HTML file
 
 **var** variable to store the JSON
-- ##### Prettify HTML
+##### Prettify HTML
 example-
 ````
 var file=new beautifulSoup(path);
