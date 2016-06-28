@@ -13,11 +13,12 @@
 </head>
 
 <body>
+	<div id="prettyCode"></div>
 	<script src="jQuery-2.1.4.min.js"></script>
 	<script src="beautiful-soup.js"></script>
 	<script>
 		var google=new beautifulSoup('test1.html');
-		google.onReady('writeToConsole');
+		google.onReady('prettify','#prettyCode');
 	</script>
 </body>
 </html>
