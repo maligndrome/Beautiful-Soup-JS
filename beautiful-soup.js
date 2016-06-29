@@ -7,7 +7,7 @@
         var jsonForm = htmlToJSON(iframeId);
 
         var prettyCode = '';
-        prettyCode += '&lt;' + jsonForm.self.tagName + '&gt;' + prettifyChildren(jsonForm.children, 1) + '<br/>&lt;/' + jsonForm.self.tagName + '&gt;';
+        prettyCode += '&lt;' + jsonForm.self.tagName + '&gt;' + prettifyChildren(jsonForm.children, 1) + '&#13;&lt;/' + jsonForm.self.tagName + '&gt;';
         return prettyCode;
     }
     prettifyChildren = function(children, tabLvl) {
@@ -15,58 +15,58 @@
         var childrenCode = '';
         for (var i = 0; i < children.length; i++) {
             if (children[i].children) {
-                var child = '<br/>';
+                var child = '&#13;';
                 for (var j = 0; j < tabLvl; j++) {
-                    child += '&nbsp;&nbsp;&nbsp;&nbsp;';
+                    child += '&#9;';
                 }
                 child += '&lt;' + children[i].self.tagName + printAttributes(children[i].self) + '&gt;' + prettifyChildren(children[i].children, tabLvl + 1);
                 if (children[i].self.innerContent == '') {
                     for (var j = 0; j < tabLvl + 1; j++) {
-                        child += '&nbsp;&nbsp;&nbsp;&nbsp;';
+                        child += '&#9;';
                     }
-                    child += children[i].self.innerContent + '<br/>';
+                    child += children[i].self.innerContent + '&#13;';
                 } else {
-                    child += '<br/>';
+                    child += '&#13;';
                 }
                 if (singletonTags.indexOf(children[i].self.tagName) == -1) {
                     for (var j = 0; j < tabLvl; j++) {
-                        child += '&nbsp;&nbsp;&nbsp;&nbsp;';
+                        child += '&#9;';
                     }
                     child += '&lt;/' + children[i].self.tagName + '&gt;';
                 }
             } else {
                 if (children[i].tagName !== 'TEXT_NODE' && children[i].tagName !== 'COMMENT_NODE') {
-                    var child = '<br/>';
+                    var child = '&#13;';
                     for (var j = 0; j < tabLvl; j++) {
-                        child += '&nbsp;&nbsp;&nbsp;&nbsp;';
+                        child += '&#9;';
                     }
                     child += '&lt;' + children[i].tagName + printAttributes(children[i]) + '&gt;';
                     if (children[i].innerContent) {
-                        child += '<br/>';
+                        child += '&#13;';
                         for (var j = 0; j < tabLvl + 1; j++) {
-                            child += '&nbsp;&nbsp;&nbsp;&nbsp;';
+                            child += '&#9;';
                         }
-                        child += children[i].innerContent + '<br/>';
+                        child += children[i].innerContent + '&#13;';
                         for (var j = 0; j < tabLvl; j++) {
-                            child += '&nbsp;&nbsp;&nbsp;&nbsp;';
+                            child += '&#9;';
                         }
                     }
                     if (singletonTags.indexOf(children[i].tagName) == -1) {
                         for (var j = 0; j < tabLvl; j++) {
-                            child += '&nbsp;&nbsp;&nbsp;&nbsp;';
+                            child += '&#9;';
                         }
                         child += '&lt;/' + children[i].tagName + '&gt;';
                     }
                 } else if (children[i].tagName === 'COMMENT_NODE') {
-                    var child = '<br/>';
+                    var child = '&#13;';
                     for (var j = 0; j < tabLvl; j++) {
-                        child += '&nbsp;&nbsp;&nbsp;&nbsp;';
+                        child += '&#9;';
                     }
                     child += '&lt;!--' + children[i].innerContent + '--&gt;';
                 } else if (children[i].tagName === 'TEXT_NODE') {
-                    var child = '<br/>';
+                    var child = '&#13;';
                     for (var j = 0; j < tabLvl; j++) {
-                        child += '&nbsp;&nbsp;&nbsp;&nbsp;';
+                        child += '&#9;';
                     }
                     child += children[i].innerContent;
                 }
@@ -140,6 +140,7 @@
             return attrObj;
         };
         obj = constructTagTree($(iframeId).contents().eq(0).children().eq(0));
+        console.log(obj);
         return obj;
     }
     beautifulSoup = function(url) {
@@ -149,25 +150,33 @@
         _this.content = '';
         _this.onReady = function(action, params) {
             if (_this.loaded === false) {
-                $(document.body).append('<iframe id="doc">');
-                $('iframe#doc').attr('src', _this.url);
-                $('iframe#doc').load(function() {
                     $.get(_this.url, function(data) {
-                        _this.loaded = true;
-                        _this.content = data;
-                        return execute(action, params);
+                        
+                        var iframe = document.createElement('iframe');
+                        iframe.id="doc";
+                        var html = data;
+                        document.body.appendChild(iframe);
+                        iframe.contentWindow.document.open();
+                        iframe.contentWindow.document.write(html);
+                        iframe.contentWindow.document.close();
+                        iframe.onload=function(){
+                            _this.loaded = true;
+                            _this.content = data;
+                            return execute(action, params);
+                        }
+                        
                     });
-                });
+               // });
             } else {
             	console.log(_this.loaded);
                 return execute(action, params);
             }
         }
         _this.html2json = function(varToStoreJSON) {
-            varToStoreJSON = htmlToJSON('iframe#doc');
+            return htmlToJSON('iframe#doc');
         }
         _this.prettify = function(divToPopulate) {
-            $(divToPopulate).append($('<pre></pre>').append(prettifyCode('iframe#doc')));
+            $(divToPopulate).append($('<textarea />').append(prettifyCode('iframe#doc')).css({width:'800px',height:'80vh'}));
         }
         execute = function(action, params) {
             if (action === 'html2json') {
