@@ -1,11 +1,57 @@
 ! function() {
     if (typeof jQuery === 'undefined') {
-
         return;
     }
-    prettifyCode = function(iframeId) {
-        var jsonForm = htmlToJSON(iframeId);
-
+    get = function(obj,attr) {
+        obj=obj['self'];
+        var returnValue;
+        Object.keys(obj).forEach(function(key, index) {
+            if(key==attr){
+                returnValue=obj[key];
+            }
+        });
+        return returnValue;
+    }
+    selectedArray = function(jsonForm, selector,attrToQuery){
+        if(attrToQuery==undefined)
+        {
+            var attrToQuery='';
+            if(selector[0]=='#'){ attrToQuery='id'; selector=selector.slice(1,selector.length);}
+            else if(selector[0]=='.'){ attrToQuery='class'; selector=selector.slice(1,selector.length);}
+            else if(selector[0]=='['){ attrToQuery=selector.slice(1,selector.indexOf('=')); selector=selector.slice(selector.indexOf('=')+1,selector.length-1);}
+            else {attrToQuery='tagName'}
+            console.log(attrToQuery);
+        }
+        var elems=[];
+        if(jsonForm.self){
+        Object.keys(jsonForm).forEach(function(key, index) {
+            if(key=='self'){
+                if(jsonForm[key][attrToQuery]==selector)
+                    elems.push(jsonForm);
+            } else {
+                if(jsonForm[key].length>=1)
+                {
+                    console.log('Has children :)');
+                    for(var i=0;i<jsonForm[key].length;i++){
+                        var _elems=selectedArray(jsonForm[key][i],selector,attrToQuery);
+                        if(_elems)
+                            for(var j=0;j<_elems.length;j++){
+                                elems.push(_elems[j]);
+                            }
+                    }
+                } else {
+                    console.log('No children ;(');
+                    return;
+                }
+                    
+                }
+            });
+        return elems;
+    }
+    else
+        return;
+    }
+    prettifyCode = function(jsonForm) {
         var prettyCode = '';
         prettyCode += '&lt;' + jsonForm.self.tagName + '&gt;' + prettifyChildren(jsonForm.children, 1) + '&#13;&lt;/' + jsonForm.self.tagName + '&gt;';
         return prettyCode;
@@ -150,7 +196,8 @@
         _this.content = '';
         _this.onReady = function(action, params) {
             if (_this.loaded === false) {
-                    $.get(_this.url, function(data) {
+                var promise=new Promise(function(resolve,reject){
+                     $.get(_this.url, function(data) {
                         
                         var iframe = document.createElement('iframe');
                         iframe.id="doc";
@@ -162,29 +209,37 @@
                         iframe.onload=function(){
                             _this.loaded = true;
                             _this.content = data;
-                            return execute(action, params);
+                            _this.jsonForm = htmlToJSON('iframe#doc');
+                            resolve(execute(action, params));
                         }
                         
                     });
-               // });
+                });
+                return promise;   
+               // );
             } else {
             	console.log(_this.loaded);
                 return execute(action, params);
             }
         }
         _this.html2json = function(varToStoreJSON) {
-            return htmlToJSON('iframe#doc');
-        }
+            return _this.jsonForm;
+        };
         _this.prettify = function(divToPopulate) {
-            $(divToPopulate).append($('<textarea />').append(prettifyCode('iframe#doc')).css({width:'800px',height:'80vh'}));
-        }
+            var pretty=prettifyCode(_this.jsonForm);
+            $(divToPopulate).append($('<textarea />').append(pretty).css({width:'800px',height:'80vh'}));
+            return pretty;
+        };
+        _this.findAll = function( tag ){
+            return selectedArray(_this.jsonForm,tag);
+        };
         execute = function(action, params) {
             if (action === 'html2json') {
-                _this.html2json(params);
-                return;
+                return _this.html2json(params);
             } else if (action === 'prettify') {
-                _this.prettify(params);
-                return;
+                return _this.prettify(params);
+            } else if (action === 'findAll') {
+                return _this.findAll(params);
             }
         };
     };
