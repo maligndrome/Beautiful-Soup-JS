@@ -2,6 +2,15 @@
     if (typeof jQuery === 'undefined') {
         return;
     }
+    String.prototype.replaceAll = function(tagList,replacee) {
+        var _this=this;
+        for(var i=0;i<tagList.length;i++) {
+            _this=_this.replace('<'+tagList[i]+'>',replacee);
+            _this=_this.replace('</'+tagList[i]+'>',replacee);
+        }
+        return _this;
+    };
+    styleTags=['b','strong','i','em','del','ins','mark','small','sub','sup','u'];
     get = function(obj,attr) {
         obj=obj['self'];
         var returnValue;
@@ -11,7 +20,7 @@
             }
         });
         return returnValue;
-    }
+    };
     selectedArray = function(jsonForm, selector,attrToQuery){
         if(attrToQuery==undefined)
         {
@@ -20,7 +29,7 @@
             else if(selector[0]=='.'){ attrToQuery='class'; selector=selector.slice(1,selector.length);}
             else if(selector[0]=='['){ attrToQuery=selector.slice(1,selector.indexOf('=')); selector=selector.slice(selector.indexOf('=')+1,selector.length-1);}
             else {attrToQuery='tagName'}
-            console.log(attrToQuery);
+            
         }
         var elems=[];
         if(jsonForm.self){
@@ -31,7 +40,7 @@
             } else {
                 if(jsonForm[key].length>=1)
                 {
-                    console.log('Has children :)');
+                    
                     for(var i=0;i<jsonForm[key].length;i++){
                         var _elems=selectedArray(jsonForm[key][i],selector,attrToQuery);
                         if(_elems)
@@ -40,7 +49,7 @@
                             }
                     }
                 } else {
-                    console.log('No children ;(');
+                    
                     return;
                 }
                     
@@ -50,7 +59,7 @@
     }
     else
         return;
-    }
+    };
     prettifyCode = function(jsonForm) {
         var prettyCode = '';
         prettyCode += '&lt;' + jsonForm.self.tagName + '&gt;' + prettifyChildren(jsonForm.children, 1) + '&#13;&lt;/' + jsonForm.self.tagName + '&gt;';
@@ -133,7 +142,6 @@
         return attributeString;
     }
     htmlToJSON = function(iframeId) {
-
         constructTagTree = function(tags) {
             if (tags.length != 1 || $(tags[0]).eq(0).contents().length != 0) {
                 var newObj = {};
@@ -154,7 +162,8 @@
             } else {
                 var newObj = {};
                 $.each(tags, function() {
-                    newObj = (constructAttributeObject($(this).eq(0)));
+                    newObj['children']='';
+                    newObj['self'] = (constructAttributeObject($(this).eq(0)));
                 });
             }
             return newObj;
@@ -186,7 +195,7 @@
             return attrObj;
         };
         obj = constructTagTree($(iframeId).contents().eq(0).children().eq(0));
-        console.log(obj);
+        
         return obj;
     }
     beautifulSoup = function(url) {
@@ -197,8 +206,7 @@
         _this.onReady = function(action, params) {
             if (_this.loaded === false) {
                 var promise=new Promise(function(resolve,reject){
-                     $.get(_this.url, function(data) {
-                        
+                     $.get(_this.url, function(data) {                        
                         var iframe = document.createElement('iframe');
                         iframe.id="doc";
                         var html = data;
@@ -206,19 +214,31 @@
                         iframe.contentWindow.document.open();
                         iframe.contentWindow.document.write(html);
                         iframe.contentWindow.document.close();
-                        iframe.onload=function(){
-                            _this.loaded = true;
-                            _this.content = data;
-                            _this.jsonForm = htmlToJSON('iframe#doc');
-                            resolve(execute(action, params));
-                        }
+                        var iframe2 = document.createElement('iframe');
+                        iframe2.id="stripped";
+                        var html2 = data.replaceAll(styleTags,'');
+                        document.body.appendChild(iframe2);
+                        iframe2.contentWindow.document.open();
+                        iframe2.contentWindow.document.write(html2);
+                        iframe2.contentWindow.document.close();
+                        var loaded=0;
+                        $('#doc, #stripped').load(function (){
+                            if (++loaded === 2) {
+                                console.log('heh');
+                                _this.loaded = true;
+                                _this.content = data;
+                                _this.jsonForm = htmlToJSON('iframe#doc');
+                                _this.jsonFormStripped = htmlToJSON('iframe#stripped');
+                                resolve(execute(action,params));
+                            }
+                        });
                         
                     });
                 });
                 return promise;   
                // );
             } else {
-            	console.log(_this.loaded);
+            	
                 return execute(action, params);
             }
         }
@@ -233,6 +253,15 @@
         _this.findAll = function( tag ){
             return selectedArray(_this.jsonForm,tag);
         };
+        _this.getText = function( param ){
+            console.log(";'(");
+            var textObj=selectedArray(selectedArray(_this.jsonFormStripped,'body')[0],'TEXT_NODE');
+            var textLines=[];
+            for(var i=0;i<textObj.length;i++){
+                textLines.push(textObj[i]['self']['innerContent']);
+            }
+            return textLines;
+        };
         execute = function(action, params) {
             if (action === 'html2json') {
                 return _this.html2json(params);
@@ -240,6 +269,8 @@
                 return _this.prettify(params);
             } else if (action === 'findAll') {
                 return _this.findAll(params);
+            } else if (action === 'getText') {
+                return _this.getText(params);
             }
         };
     };
