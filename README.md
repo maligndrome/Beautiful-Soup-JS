@@ -8,9 +8,11 @@ Leveraging jQuery to perform webpage scraping in Javascript.
 example-
 ````
 var file=new beautifulSoup(path);
-file.onReady('html2json',var);
+file.onReady('html2json').then(function(jsonForm){
+ console.log(jsonForm);
+});
 ````
-**src** path to the HTML file
+**path** path to the HTML file
 
 **var** variable to store the JSON
 ##### Prettify HTML
@@ -19,7 +21,20 @@ example-
 var file=new beautifulSoup(path);
 file.onReady('prettify',id);
 ````
-**src** path to the HTML file
+**path** path to the HTML file
 
 **id** ID of the element in which you want the prettified code to appear
+
+##### Find elements
+example(print all links on the page)-
+````
+var file=new beautifulSoup(path);
+file.onReady('findAll','a').then(function(linksArray){
+ for(var i=0;i<linksArray.length;i++){
+	 console.log(get(linksArray[i],'href'));
+	}
+});
+````
+**path** path to the HTML file
+
 
