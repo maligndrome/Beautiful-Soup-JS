@@ -25,11 +25,23 @@
         if(attrToQuery==undefined)
         {
             var attrToQuery='';
-            if(selector[0]=='#'){ attrToQuery='id'; selector=selector.slice(1,selector.length);}
-            else if(selector[0]=='.'){ attrToQuery='class'; selector=selector.slice(1,selector.length);}
-            else if(selector[0]=='['){ attrToQuery=selector.slice(1,selector.indexOf('=')); selector=selector.slice(selector.indexOf('=')+1,selector.length-1);}
-            else {attrToQuery='tagName'}
-            
+            if(selector.indexOf('>')==-1){
+                if(selector[0]=='#'){ attrToQuery='id'; selector=selector.slice(1,selector.length);}
+                else if(selector[0]=='.'){ attrToQuery='class'; selector=selector.slice(1,selector.length);}
+                else if(selector[0]=='['){ attrToQuery=selector.slice(1,selector.indexOf('=')); selector=selector.slice(selector.indexOf('=')+1,selector.length-1);}
+                else {attrToQuery='tagName'}
+            } else {
+                //currently only for #id>elem(s)
+                jsonForm=selectedArray(jsonForm,selector.slice(0,selector.indexOf('>')))[0];
+                selector=selector.slice(selector.indexOf('>')+1,selector.length);
+                console.log('made up jsonForm',jsonForm);
+                if(selector[0]=='#'){ attrToQuery='id'; selector=selector.slice(1,selector.length);}
+                else if(selector[0]=='.'){ attrToQuery='class'; selector=selector.slice(1,selector.length);}
+                else if(selector[0]=='['){ attrToQuery=selector.slice(1,selector.indexOf('=')); selector=selector.slice(selector.indexOf('=')+1,selector.length-1);}
+                else {attrToQuery='tagName'}
+                // console.log(selectedArray(jsonForm,selector.slice(0,selector.indexOf('>'))));
+                // return;
+            }
         }
         var elems=[];
         if(jsonForm.self){
@@ -204,7 +216,8 @@
         _this.loaded = false;
         _this.content = '';
         _this.onReady = function(action, params) {
-            if (_this.loaded === false) {
+            if (_this.loaded == false) {
+                _this.loaded=true;
                 var promise=new Promise(function(resolve,reject){
                      $.get(_this.url, function(data) {                        
                         var iframe = document.createElement('iframe');
@@ -238,8 +251,11 @@
                 return promise;   
                // );
             } else {
-            	
-                return execute(action, params);
+                var promise2=new Promise(function(resolve,reject){
+                    console.log('loaded execution!');
+                    resolve(execute(action, params));
+                });
+                return promise2;
             }
         }
         _this.html2json = function(varToStoreJSON) {
@@ -251,7 +267,15 @@
             return pretty;
         };
         _this.findAll = function( tag ){
-            return selectedArray(_this.jsonForm,tag);
+            if(Array.isArray(tag)){
+                var results=[]
+                for(var i=0;i<tag.length;i++){
+                    results.push(selectedArray(_this.jsonForm,tag[i]));
+                }
+                return results;
+            } else {
+                return selectedArray(_this.jsonForm,tag);
+            }
         };
         _this.getText = function( param ){
             console.log(";'(");
