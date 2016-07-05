@@ -102,40 +102,40 @@
                     child += '&lt;/' + children[i].self.tagName + '&gt;';
                 }
             } else {
-                if (children[i].tagName !== 'TEXT_NODE' && children[i].tagName !== 'COMMENT_NODE') {
+                if (children[i].self.tagName !== 'TEXT_NODE' && children[i].self.tagName !== 'COMMENT_NODE') {
                     var child = '&#13;';
                     for (var j = 0; j < tabLvl; j++) {
                         child += '&#9;';
                     }
-                    child += '&lt;' + children[i].tagName + printAttributes(children[i]) + '&gt;';
-                    if (children[i].innerContent) {
+                    child += '&lt;' + children[i].self.tagName + printAttributes(children[i].self) + '&gt;';
+                    if (children[i].self.innerContent) {
                         child += '&#13;';
                         for (var j = 0; j < tabLvl + 1; j++) {
                             child += '&#9;';
                         }
-                        child += children[i].innerContent + '&#13;';
+                        child += children[i].self.innerContent + '&#13;';
                         for (var j = 0; j < tabLvl; j++) {
                             child += '&#9;';
                         }
                     }
-                    if (singletonTags.indexOf(children[i].tagName) == -1) {
+                    if (singletonTags.indexOf(children[i].self.tagName) == -1) {
                         for (var j = 0; j < tabLvl; j++) {
                             child += '&#9;';
                         }
-                        child += '&lt;/' + children[i].tagName + '&gt;';
+                        child += '&lt;/' + children[i].self.tagName + '&gt;';
                     }
-                } else if (children[i].tagName === 'COMMENT_NODE') {
+                } else if (children[i].self.tagName === 'COMMENT_NODE') {
                     var child = '&#13;';
                     for (var j = 0; j < tabLvl; j++) {
                         child += '&#9;';
                     }
-                    child += '&lt;!--' + children[i].innerContent + '--&gt;';
-                } else if (children[i].tagName === 'TEXT_NODE') {
+                    child += '&lt;!--' + children[i].self.innerContent + '--&gt;';
+                } else if (children[i].self.tagName === 'TEXT_NODE') {
                     var child = '&#13;';
                     for (var j = 0; j < tabLvl; j++) {
                         child += '&#9;';
                     }
-                    child += children[i].innerContent;
+                    child += children[i].self.innerContent;
                 }
             }
 
@@ -206,7 +206,6 @@
                     return;
                 }
             }
-            attrObj['children'] = '';
             if ($(element).prop('tagName'))
                 $.each(element.attributes, function() {
                     attrObj[this.name] = this.value;
@@ -261,14 +260,15 @@
                             });
                         }
                         else {
-                            var promise = new Promise(function(resolve,reject){
+                            
+                                _this.loaded = true;
+                                _this.content = data;
                                 data=data.replace(/<html[^>]*>/,"<hmmhtml>");
                                 data=data.replace(/<head[^>]*>/,"<hmmhead>");
                                 data=data.replace("</html>","</hmmhtml>");
                                 data=data.replace(/<body[^>]*>/,"<hmmbody>");
-                                data=data.replace("</head>","</hmmhead");
+                                data=data.replace("</head>","</hmmhead>");
                                 data=data.replace("</body>","</hmmbody>");
-                                console.log(data);
                                 var iframe = document.createElement('div');
                                 iframe.id="doc";
                                 var html = data;
@@ -276,8 +276,7 @@
                                 iframe.innerHTML=(html);
                                 _this.jsonForm = htmlToJSON('#doc');
                                 resolve(execute(action,params));
-                            });
-                            return promise;
+                            
                         }
                     });
                 });
@@ -296,7 +295,7 @@
         };
         _this.prettify = function(divToPopulate) {
             var pretty=prettifyCode(_this.jsonForm);
-            $(divToPopulate).append($('<textarea />').append(pretty).css({width:'800px',height:'80vh'}));
+            $(divToPopulate).append($('<textarea />').html(pretty).css({width:'800px',height:'80vh'}));
             return pretty;
         };
         _this.findAll = function( tag ){
@@ -311,7 +310,6 @@
             }
         };
         _this.getText = function( param ){
-            console.log(";'(");
             var textObj=selectedArray(selectedArray(_this.jsonFormStripped,'body')[0],'TEXT_NODE');
             var textLines=[];
             for(var i=0;i<textObj.length;i++){
