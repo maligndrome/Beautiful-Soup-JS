@@ -156,7 +156,7 @@
     constructJSONfromArray = function(HTMLarray) {
         
     }
-    htmlToJSON = function(iframeId) {
+    htmlToJSON = function(divId) {
         constructTagTree = function(tags) {
             if (tags.length != 1 || $(tags[0]).eq(0).contents().length != 0) {
                 var newObj = {};
@@ -213,11 +213,11 @@
 
             return attrObj;
         };
-        if(iframeId.indexOf('iframe')!=-1)
-            obj = constructTagTree($(iframeId).contents().eq(0).children().eq(0));
-        else {
-            obj = constructTagTree($(iframeId).children().eq(0));
-        }
+        // if(divId.indexOf('iframe')!=-1)
+        //     obj = constructTagTree($(divId).contents().eq(0).children().eq(0));
+        // else {
+            obj = constructTagTree($(divId).children().eq(0));
+        // }
         
         return obj;
     }
@@ -231,35 +231,35 @@
                 _this.loaded=true;
                 var promise=new Promise(function(resolve,reject){
                      $.get(_this.url, function(data,status,response) {  
-                        response=response.getResponseHeader("X-Frame-Options");
-                        if(response!="deny") {
-                            var iframe = document.createElement('iframe');
-                            iframe.id="doc";
-                            var html = data;
-                            document.body.appendChild(iframe);
-                            iframe.contentWindow.document.open();
-                            iframe.contentWindow.document.write(html);
-                            iframe.contentWindow.document.close();
-                            var iframe2 = document.createElement('iframe');
-                            iframe2.id="stripped";
-                            var html2 = data.replaceAll(styleTags,'');
-                            document.body.appendChild(iframe2);
-                            iframe2.contentWindow.document.open();
-                            iframe2.contentWindow.document.write(html2);
-                            iframe2.contentWindow.document.close();
-                            var loaded=0;
-                            $('#doc, #stripped').load(function (){
-                                if (++loaded === 2) {
-                                    console.log('heh');
-                                    _this.loaded = true;
-                                    _this.content = data;
-                                    _this.jsonForm = htmlToJSON('iframe#doc');
-                                    _this.jsonFormStripped = htmlToJSON('iframe#stripped');
-                                    resolve(execute(action,params));
-                                }
-                            });
-                        }
-                        else {
+                        // response=response.getResponseHeader("X-Frame-Options");
+                        // if(response!="deny") {
+                        //     var iframe = document.createElement('iframe');
+                        //     iframe.id="doc";
+                        //     var html = data;
+                        //     document.body.appendChild(iframe);
+                        //     iframe.contentWindow.document.open();
+                        //     iframe.contentWindow.document.write(html);
+                        //     iframe.contentWindow.document.close();
+                        //     var iframe2 = document.createElement('iframe');
+                        //     iframe2.id="stripped";
+                        //     var html2 = data.replaceAll(styleTags,'');
+                        //     document.body.appendChild(iframe2);
+                        //     iframe2.contentWindow.document.open();
+                        //     iframe2.contentWindow.document.write(html2);
+                        //     iframe2.contentWindow.document.close();
+                        //     var loaded=0;
+                        //     $('#doc, #stripped').load(function (){
+                        //         if (++loaded === 2) {
+                        //             console.log('heh');
+                        //             _this.loaded = true;
+                        //             _this.content = data;
+                        //             _this.jsonForm = htmlToJSON('iframe#doc');
+                        //             _this.jsonFormStripped = htmlToJSON('iframe#stripped');
+                        //             resolve(execute(action,params));
+                        //         }
+                        //     });
+                        // }
+                        // else {
                             
                                 _this.loaded = true;
                                 _this.content = data;
@@ -269,15 +269,16 @@
                                 data=data.replace(/<body[^>]*>/,"<hmmbody>");
                                 data=data.replace("</head>","</hmmhead>");
                                 data=data.replace("</body>","</hmmbody>");
-                                var iframe = document.createElement('div');
-                                iframe.id="doc";
+                                var div = document.createElement('div');
+                                div.id="doc";
+                                div.style="display:none;"
                                 var html = data;
-                                document.body.appendChild(iframe);
-                                iframe.innerHTML=(html);
+                                document.body.appendChild(div);
+                                div.innerHTML=(html);
                                 _this.jsonForm = htmlToJSON('#doc');
                                 resolve(execute(action,params));
                             
-                        }
+                        //}
                     });
                 });
                 return promise;   
