@@ -21,7 +21,8 @@
         });
         return returnValue;
     };
-    selectedArray = function(jsonForm, selector,attrToQuery){
+    selectedArray = function(jsonForm, selector,attrToQuery,childLevel){
+        if(childLevel===undefined) childLevel= Infinity;
         if(attrToQuery==undefined)
         {
             var attrToQuery='';
@@ -39,6 +40,7 @@
                 else if(selector[0]=='.'){ attrToQuery='class'; selector=selector.slice(1,selector.length);}
                 else if(selector[0]=='['){ attrToQuery=selector.slice(1,selector.indexOf('=')); selector=selector.slice(selector.indexOf('=')+1,selector.length-1);}
                 else {attrToQuery='tagName'}
+                childLevel=1;
                 // console.log(selectedArray(jsonForm,selector.slice(0,selector.indexOf('>'))));
                 // return;
             }
@@ -50,11 +52,11 @@
                 if(jsonForm[key][attrToQuery]==selector)
                     elems.push(jsonForm);
             } else {
-                if(jsonForm[key].length>=1)
+                if(jsonForm[key].length>=1&&childLevel>0)
                 {
                     
                     for(var i=0;i<jsonForm[key].length;i++){
-                        var _elems=selectedArray(jsonForm[key][i],selector,attrToQuery);
+                        var _elems=selectedArray(jsonForm[key][i],selector,attrToQuery,childLevel-1);
                         if(_elems)
                             for(var j=0;j<_elems.length;j++){
                                 elems.push(_elems[j]);
@@ -260,23 +262,45 @@
                         //     });
                         // }
                         // else {
-                            
-                                _this.loaded = true;
-                                _this.content = data;
-                                data=data.replace(/<html[^>]*>/,"<hmmhtml>");
-                                data=data.replace(/<head[^>]*>/,"<hmmhead>");
-                                data=data.replace("</html>","</hmmhtml>");
-                                data=data.replace(/<body[^>]*>/,"<hmmbody>");
-                                data=data.replace("</head>","</hmmhead>");
-                                data=data.replace("</body>","</hmmbody>");
-                                var div = document.createElement('div');
-                                div.id="doc";
-                                div.style="display:none;"
-                                var html = data;
-                                document.body.appendChild(div);
-                                div.innerHTML=(html);
-                                _this.jsonForm = htmlToJSON('#doc');
-                                resolve(execute(action,params));
+                        if(action!='pre-process'){
+                            _this.loaded = true;
+                            _this.content = data;
+                            data=data.replace(/<html[^>]*>/,"<hmmhtml>");
+                            data=data.replace(/<head[^>]*>/,"<hmmhead>");
+                            data=data.replace("</html>","</hmmhtml>");
+                            data=data.replace(/<body[^>]*>/,"<hmmbody>");
+                            data=data.replace("</head>","</hmmhead>");
+                            data=data.replace("</body>","</hmmbody>");
+                            var div = document.createElement('div');
+                            div.id="doc";
+                            div.style="display:none;"
+                            var html = data;
+                            document.body.appendChild(div);
+                            div.innerHTML=(html);
+                            _this.jsonForm = htmlToJSON('#doc');
+                            resolve(execute(action,params));
+                        } else {
+                            _this.loaded = true;
+                            _this.content = data;
+                            data=params(data);
+                            data=data.replace(/<html[^>]*>/,"<hmmhtml>");
+                            data=data.replace(/<head[^>]*>/,"<hmmhead>");
+                            data=data.replace("</html>","</hmmhtml>");
+                            data=data.replace(/<body[^>]*>/,"<hmmbody>");
+                            data=data.replace("</head>","</hmmhead>");
+                            data=data.replace("</body>","</hmmbody>");
+
+                            // console.log(data);
+                            var div = document.createElement('div');
+                            div.id="doc";
+                            div.style="display:none;"
+                            var html = data;
+                            document.body.appendChild(div);
+                            div.innerHTML=(html);
+                            _this.jsonForm = htmlToJSON('#doc');
+                            resolve(true);
+                        }
+                                
                             
                         //}
                     });
