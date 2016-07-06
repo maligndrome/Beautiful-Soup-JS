@@ -21,8 +21,7 @@
         });
         return returnValue;
     };
-    selectedArray = function(jsonForm, selector,attrToQuery,childLevel){
-        if(childLevel===undefined) childLevel= Infinity;
+    removeElems = function(jsonForm, selector, attrToQuery){
         if(attrToQuery==undefined)
         {
             var attrToQuery='';
@@ -35,12 +34,89 @@
                 //currently only for #id>elem(s)
                 jsonForm=selectedArray(jsonForm,selector.slice(0,selector.indexOf('>')))[0];
                 selector=selector.slice(selector.indexOf('>')+1,selector.length);
-                console.log('made up jsonForm',jsonForm);
                 if(selector[0]=='#'){ attrToQuery='id'; selector=selector.slice(1,selector.length);}
                 else if(selector[0]=='.'){ attrToQuery='class'; selector=selector.slice(1,selector.length);}
                 else if(selector[0]=='['){ attrToQuery=selector.slice(1,selector.indexOf('=')); selector=selector.slice(selector.indexOf('=')+1,selector.length-1);}
                 else {attrToQuery='tagName'}
-                childLevel=1;
+               // childLevel=1;
+                // console.log(selectedArray(jsonForm,selector.slice(0,selector.indexOf('>'))));
+                // return;
+            }
+        }
+        if(jsonForm.self){
+            Object.keys(jsonForm).forEach(function(key, index) {
+                if(key=='self'){
+                    if(attrToQuery!='class'){
+                        if(jsonForm[key][attrToQuery]==selector) {
+                            jsonForm.self={};
+                            jsonForm.children={};
+                        }
+                    } else {
+                        if(jsonForm[key][attrToQuery])
+                        if(jsonForm[key][attrToQuery].indexOf(selector)>-1) {
+                            jsonForm.self={};
+                            jsonForm.children={};
+                        }
+                    }
+                    
+                } else {
+                    if(jsonForm[key].length>=1)
+                    {
+                        for(var i=0;i<jsonForm[key].length;i++){
+                            removeElems(jsonForm[key][i],selector,attrToQuery);
+                        }
+                    } else {
+                        return delete_null_nodes(jsonForm);
+                    }
+                        
+                }
+             });
+        return delete_null_nodes(jsonForm);
+        }
+    else
+        return delete_null_nodes(jsonForm);
+    };
+    delete_null_nodes = function (jsonForm) {
+        if($.isEmptyObject(jsonForm.self)&&$.isEmptyObject(jsonForm.children)) return null;
+        else {
+            var children=[];
+            for(var i=0;i<jsonForm.children.length;i++) {
+                var child=delete_null_nodes(jsonForm.children[i]);
+                if(child) children.push(child);
+            }
+            if(children.length>0)
+                jsonForm.children=children;
+            else
+                jsonForm.children='';
+        }
+        return jsonForm;
+    }
+    selectedArray = function(jsonForm, selector,attrToQuery,childLevel){
+        if(childLevel===undefined) childLevel= Infinity;
+        if(attrToQuery==undefined)
+        {
+            var attrToQuery='';
+            if(selector.indexOf('>')==-1 && selector.indexOf(' ')==-1){
+                if(selector[0]=='#'){ attrToQuery='id'; selector=selector.slice(1,selector.length);}
+                else if(selector[0]=='.'){ attrToQuery='class'; selector=selector.slice(1,selector.length);}
+                else if(selector[0]=='['){ attrToQuery=selector.slice(1,selector.indexOf('=')); selector=selector.slice(selector.indexOf('=')+1,selector.length-1);}
+                else {attrToQuery='tagName'}
+            } else {
+                //currently only for #id>elem(s)
+                if(selector.indexOf(' ')==-1) {
+                    jsonForm=selectedArray(jsonForm,selector.slice(0,selector.indexOf('>')))[0];
+                    selector=selector.slice(selector.indexOf('>')+1,selector.length);
+                    childLevel=1;
+                } else {
+                    jsonForm=selectedArray(jsonForm,selector.split(' ')[0])[0];
+                    ultimateGlobal=jsonForm;
+                    selector=selector.split(' ')[1];
+                    childLevel=Infinity;
+                }
+                if(selector[0]=='#'){ attrToQuery='id'; selector=selector.slice(1,selector.length);}
+                else if(selector[0]=='.'){ attrToQuery='class'; selector=selector.slice(1,selector.length);}
+                else if(selector[0]=='['){ attrToQuery=selector.slice(1,selector.indexOf('=')); selector=selector.slice(selector.indexOf('=')+1,selector.length-1);}
+                else {attrToQuery='tagName'}
                 // console.log(selectedArray(jsonForm,selector.slice(0,selector.indexOf('>'))));
                 // return;
             }
@@ -49,8 +125,15 @@
         if(jsonForm.self){
         Object.keys(jsonForm).forEach(function(key, index) {
             if(key=='self'){
-                if(jsonForm[key][attrToQuery]==selector)
+                if(attrToQuery!='class'){
+                    if(jsonForm[key][attrToQuery]==selector)
                     elems.push(jsonForm);
+                } else {
+                    if(jsonForm[key][attrToQuery])
+                    if(jsonForm[key][attrToQuery].indexOf(selector)>-1)
+                        elems.push(jsonForm);
+                }
+                
             } else {
                 if(jsonForm[key].length>=1&&childLevel>0)
                 {
@@ -233,35 +316,6 @@
                 _this.loaded=true;
                 var promise=new Promise(function(resolve,reject){
                      $.get(_this.url, function(data,status,response) {  
-                        // response=response.getResponseHeader("X-Frame-Options");
-                        // if(response!="deny") {
-                        //     var iframe = document.createElement('iframe');
-                        //     iframe.id="doc";
-                        //     var html = data;
-                        //     document.body.appendChild(iframe);
-                        //     iframe.contentWindow.document.open();
-                        //     iframe.contentWindow.document.write(html);
-                        //     iframe.contentWindow.document.close();
-                        //     var iframe2 = document.createElement('iframe');
-                        //     iframe2.id="stripped";
-                        //     var html2 = data.replaceAll(styleTags,'');
-                        //     document.body.appendChild(iframe2);
-                        //     iframe2.contentWindow.document.open();
-                        //     iframe2.contentWindow.document.write(html2);
-                        //     iframe2.contentWindow.document.close();
-                        //     var loaded=0;
-                        //     $('#doc, #stripped').load(function (){
-                        //         if (++loaded === 2) {
-                        //             console.log('heh');
-                        //             _this.loaded = true;
-                        //             _this.content = data;
-                        //             _this.jsonForm = htmlToJSON('iframe#doc');
-                        //             _this.jsonFormStripped = htmlToJSON('iframe#stripped');
-                        //             resolve(execute(action,params));
-                        //         }
-                        //     });
-                        // }
-                        // else {
                         if(action!='pre-process'){
                             _this.loaded = true;
                             _this.content = data;
@@ -310,7 +364,6 @@
                // );
             } else {
                 var promise2=new Promise(function(resolve,reject){
-                    console.log('loaded execution!');
                     resolve(execute(action, params));
                 });
                 return promise2;
@@ -343,6 +396,15 @@
             }
             return textLines;
         };
+        _this.remove = function( tag ){
+            if(Array.isArray(tag)){
+                for(var i=0;i<tag.length;i++){
+                     _this.jsonForm=removeElems(_this.jsonForm,tag[i]);
+                }
+            } else {
+                 _this.jsonForm=removeElems(_this.jsonForm,tag);
+            }
+        };
         execute = function(action, params) {
             if (action === 'html2json') {
                 return _this.html2json(params);
@@ -352,6 +414,8 @@
                 return _this.findAll(params);
             } else if (action === 'getText') {
                 return _this.getText(params);
+            } else if (action === 'remove') {
+                return _this.remove(params);
             }
         };
     };
