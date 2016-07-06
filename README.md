@@ -3,6 +3,10 @@ Leveraging jQuery to perform webpage scraping in Javascript.
 #### Dependencies
  - jQuery
 
+####Demo
+Determining how far a Wikipedia article is from the article on Philosophy.
+https://github.com/maligndrome/The-Root-of-Everything
+
 #### Currently supported functionality
 ##### HTML to JSON
 example-
