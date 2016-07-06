@@ -271,6 +271,7 @@
                             data=data.replace(/<body[^>]*>/,"<hmmbody>");
                             data=data.replace("</head>","</hmmhead>");
                             data=data.replace("</body>","</hmmbody>");
+                            $('#doc').remove();
                             var div = document.createElement('div');
                             div.id="doc";
                             div.style="display:none;"
@@ -289,7 +290,7 @@
                             data=data.replace(/<body[^>]*>/,"<hmmbody>");
                             data=data.replace("</head>","</hmmhead>");
                             data=data.replace("</body>","</hmmbody>");
-
+                            $('#doc').remove();
                             // console.log(data);
                             var div = document.createElement('div');
                             div.id="doc";
